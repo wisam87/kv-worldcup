@@ -38,7 +38,8 @@ export default async function HomePage() {
             United 2026 · USA · Canada · Mexico
           </p>
           <h1 className="mt-3 font-display text-4xl font-700 uppercase leading-tight tracking-tight text-white sm:text-6xl">
-            The Prediction <span className="shimmer-text">Leaderboard</span>
+            Kokaa Villa <span className="text-white/40">—</span>{" "}
+            <span className="shimmer-text">Leaderboard</span>
           </h1>
           <p className="mx-auto mt-3 max-w-md text-sm text-white/70 sm:text-base">
             Exact score = 3 pts · right result = 1 pt. Every saved result
