@@ -50,6 +50,12 @@ export default async function Header() {
             Leaderboard
           </Link>
           <Link
+            href="/table"
+            className="rounded-full px-3 py-2 text-white/80 transition hover:bg-white/10 hover:text-white"
+          >
+            Table
+          </Link>
+          <Link
             href="/matches"
             className="rounded-full px-3 py-2 text-white/80 transition hover:bg-white/10 hover:text-white"
           >

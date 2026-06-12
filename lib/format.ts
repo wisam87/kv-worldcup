@@ -45,6 +45,17 @@ export function formatTime(iso: string) {
   return timeFmt.format(new Date(iso));
 }
 
+const shortDateFmt = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+});
+
+/** e.g. "12 Jun - 9:00 AM" */
+export function formatShortKickoff(iso: string) {
+  const d = new Date(iso);
+  return `${shortDateFmt.format(d)} - ${timeFmt.format(d)}`;
+}
+
 /** YYYY-MM-DD bucket key for grouping fixtures by day (local time). */
 export function dayKey(iso: string) {
   const d = new Date(iso);

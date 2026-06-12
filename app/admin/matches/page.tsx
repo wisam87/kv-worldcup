@@ -2,7 +2,7 @@ import Link from "next/link";
 import Flag from "@/components/Flag";
 import { createClient } from "@/lib/supabase/server";
 import { MATCH_SELECT, homeSide, awaySide } from "@/lib/teams";
-import { isResultUnlocked } from "@/lib/format";
+import { isResultUnlocked, formatShortKickoff } from "@/lib/format";
 import {
   STAGE_LABELS,
   STAGE_ORDER,
@@ -65,55 +65,59 @@ function AdminMatchRow({ match }: { match: MatchWithTeams }) {
     <li>
       <Link
         href={`/admin/matches/${match.id}`}
-        className="flex items-center gap-3 rounded-xl card-glass px-3 py-3 transition hover:-translate-y-0.5 hover:border-white/25"
+        className="block rounded-xl card-glass px-3 py-2.5 transition hover:-translate-y-0.5 hover:border-white/25"
       >
-        <span className="w-8 shrink-0 text-center font-display text-xs text-white/40">
-          #{match.match_number ?? "—"}
-        </span>
-
-        <div className="flex flex-1 items-center justify-end gap-2 text-right">
+        <div className="mb-1.5 flex items-center justify-between gap-2 text-[11px] font-600">
+          <span className="text-white/45">
+            #{match.match_number ?? "—"} ·{" "}
+            {formatShortKickoff(match.kickoff_time)}
+          </span>
           <span
-            className={`line-clamp-1 text-sm font-600 ${
-              home.isTbd ? "text-white/45" : "text-white"
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-700 uppercase tracking-wider ${
+              finished
+                ? "bg-gold-500/15 text-gold-300"
+                : unlocked
+                  ? "bg-azure-500/20 text-azure-100"
+                  : "bg-white/10 text-white/45"
             }`}
           >
-            {home.name}
+            {finished ? "FT" : unlocked ? "Ready" : "Locked"}
           </span>
-          <Flag side={home} size="text-xl" />
         </div>
 
-        <div className="shrink-0 text-center">
-          {finished ? (
-            <span className="font-display text-lg font-700 tabular-nums text-gold-400">
-              {match.home_score}–{match.away_score}
+        <div className="flex items-center gap-3">
+          <div className="flex flex-1 items-center justify-end gap-2 text-right">
+            <span
+              className={`line-clamp-1 text-sm font-600 ${
+                home.isTbd ? "text-white/45" : "text-white"
+              }`}
+            >
+              {home.name}
             </span>
-          ) : (
-            <span className="text-white/30">v</span>
-          )}
-        </div>
+            <Flag side={home} size="text-xl" />
+          </div>
 
-        <div className="flex flex-1 items-center gap-2">
-          <Flag side={away} size="text-xl" />
-          <span
-            className={`line-clamp-1 text-sm font-600 ${
-              away.isTbd ? "text-white/45" : "text-white"
-            }`}
-          >
-            {away.name}
-          </span>
-        </div>
+          <div className="min-w-9 shrink-0 text-center">
+            {finished ? (
+              <span className="font-display text-lg font-700 tabular-nums text-gold-400">
+                {match.home_score}–{match.away_score}
+              </span>
+            ) : (
+              <span className="text-white/30">v</span>
+            )}
+          </div>
 
-        <span
-          className={`hidden shrink-0 rounded-full px-2 py-0.5 text-[10px] font-700 uppercase tracking-wider sm:inline ${
-            finished
-              ? "bg-gold-500/15 text-gold-300"
-              : unlocked
-                ? "bg-azure-500/20 text-azure-100"
-                : "bg-white/10 text-white/45"
-          }`}
-        >
-          {finished ? "FT" : unlocked ? "Ready" : "Locked"}
-        </span>
+          <div className="flex flex-1 items-center gap-2">
+            <Flag side={away} size="text-xl" />
+            <span
+              className={`line-clamp-1 text-sm font-600 ${
+                away.isTbd ? "text-white/45" : "text-white"
+              }`}
+            >
+              {away.name}
+            </span>
+          </div>
+        </div>
       </Link>
     </li>
   );
