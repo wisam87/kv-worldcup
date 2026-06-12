@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { savePrediction, type ActionState } from "@/app/admin/matches/actions";
+import { Combobox } from "@/components/ui/combobox";
 import type { Participant } from "@/lib/types";
 
 function Save({ label }: { label: string }) {
@@ -20,6 +21,8 @@ function Save({ label }: { label: string }) {
 
 export default function PredictionForm({
   matchId,
+  homeName,
+  awayName,
   availableParticipants,
   fixedParticipant,
   defaultHome,
@@ -27,6 +30,8 @@ export default function PredictionForm({
   onDone,
 }: {
   matchId: string;
+  homeName: string;
+  awayName: string;
   /** Participants selectable when adding a new prediction. */
   availableParticipants?: Participant[];
   /** When editing, the participant is fixed. */
@@ -41,11 +46,16 @@ export default function PredictionForm({
     { error: null }
   );
   const formRef = useRef<HTMLFormElement>(null);
+  const [participantId, setParticipantId] = useState("");
 
   useEffect(() => {
     if (state.ok) {
-      if (editing) onDone?.();
-      else formRef.current?.reset();
+      if (editing) {
+        onDone?.();
+      } else {
+        formRef.current?.reset();
+        setParticipantId("");
+      }
     }
   }, [state.ok, editing, onDone]);
 
@@ -69,32 +79,37 @@ export default function PredictionForm({
           </span>
         </>
       ) : (
-        <label className="min-w-[10rem] flex-1">
+        <div className="min-w-[12rem] flex-1">
           <span className="mb-1 block text-[11px] font-600 uppercase tracking-widest text-white/55">
             Participant
           </span>
-          <select
-            name="participant_id"
-            required
-            defaultValue=""
-            className="w-full rounded-xl border border-white/15 bg-pitch-900 px-3 py-2 text-sm text-white outline-none focus:border-gold-400/60 focus:ring-2 focus:ring-gold-400/20"
-          >
-            <option value="" disabled>
-              Select…
-            </option>
-            {availableParticipants?.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
+          <input type="hidden" name="participant_id" value={participantId} />
+          <Combobox
+            options={(availableParticipants ?? []).map((p) => ({
+              value: p.id,
+              label: p.name,
+            }))}
+            value={participantId}
+            onChange={setParticipantId}
+            placeholder="Select participant…"
+            searchPlaceholder="Search participants…"
+            emptyText="No participant found."
+          />
+        </div>
       )}
 
       <div className="flex items-end gap-1.5">
-        <ScoreBox name="predicted_home" defaultValue={defaultHome} />
-        <span className="pb-2 text-white/40">–</span>
-        <ScoreBox name="predicted_away" defaultValue={defaultAway} />
+        <ScoreBox
+          name="predicted_home"
+          label={homeName}
+          defaultValue={defaultHome}
+        />
+        <span className="pb-5 text-white/40">–</span>
+        <ScoreBox
+          name="predicted_away"
+          label={awayName}
+          defaultValue={defaultAway}
+        />
       </div>
 
       <Save label={editing ? "Save" : "Add"} />
@@ -119,22 +134,29 @@ export default function PredictionForm({
 
 function ScoreBox({
   name,
+  label,
   defaultValue,
 }: {
   name: string;
+  label: string;
   defaultValue?: number;
 }) {
   return (
-    <input
-      name={name}
-      type="number"
-      min={0}
-      max={99}
-      required
-      inputMode="numeric"
-      defaultValue={defaultValue ?? ""}
-      placeholder="0"
-      className="h-11 w-12 rounded-xl border border-white/15 bg-white/5 text-center font-display text-xl font-700 text-white outline-none placeholder:text-white/20 focus:border-gold-400/60 focus:ring-2 focus:ring-gold-400/20"
-    />
+    <label className="flex flex-col items-center gap-1">
+      <span className="max-w-[5.5rem] truncate text-center text-[10px] font-600 uppercase tracking-wide text-white/55">
+        {label}
+      </span>
+      <input
+        name={name}
+        type="number"
+        min={0}
+        max={99}
+        required
+        inputMode="numeric"
+        defaultValue={defaultValue ?? ""}
+        placeholder="0"
+        className="h-11 w-12 rounded-xl border border-white/15 bg-white/5 text-center font-display text-xl font-700 text-white outline-none placeholder:text-white/20 focus:border-gold-400/60 focus:ring-2 focus:ring-gold-400/20"
+      />
+    </label>
   );
 }

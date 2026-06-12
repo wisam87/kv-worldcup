@@ -191,6 +191,8 @@ export default async function MatchDetailPage({
                 </p>
                 <PredictionForm
                   matchId={match.id}
+                  homeName={home.name}
+                  awayName={away.name}
                   availableParticipants={available}
                 />
               </div>
@@ -203,6 +205,8 @@ export default async function MatchDetailPage({
                     key={p.id}
                     prediction={p}
                     matchId={match.id}
+                    homeName={home.name}
+                    awayName={away.name}
                     finished={finished}
                   />
                 ))}

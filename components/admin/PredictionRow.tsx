@@ -14,10 +14,14 @@ const POINT_STYLES: Record<number, string> = {
 export default function PredictionRow({
   prediction,
   matchId,
+  homeName,
+  awayName,
   finished,
 }: {
   prediction: PredictionWithParticipant;
   matchId: string;
+  homeName: string;
+  awayName: string;
   finished: boolean;
 }) {
   const [editing, setEditing] = useState(false);
@@ -28,6 +32,8 @@ export default function PredictionRow({
       <li className="rounded-xl card-glass p-3">
         <PredictionForm
           matchId={matchId}
+          homeName={homeName}
+          awayName={awayName}
           fixedParticipant={{ id: prediction.participant_id, name }}
           defaultHome={prediction.predicted_home}
           defaultAway={prediction.predicted_away}
