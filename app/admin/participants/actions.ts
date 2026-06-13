@@ -109,3 +109,26 @@ export async function deleteParticipant(formData: FormData) {
   revalidatePath("/admin/participants");
   revalidatePath("/");
 }
+
+export async function removePhoto(formData: FormData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  // Best-effort: delete the stored object too, derived from its public URL.
+  const { data: p } = await supabase
+    .from("participants")
+    .select("photo_url")
+    .eq("id", id)
+    .single();
+  const url = p?.photo_url as string | undefined;
+  const marker = `/${BUCKET}/`;
+  const at = url?.indexOf(marker) ?? -1;
+  if (url && at !== -1) {
+    await supabase.storage.from(BUCKET).remove([url.slice(at + marker.length)]);
+  }
+
+  await supabase.from("participants").update({ photo_url: null }).eq("id", id);
+  revalidatePath("/admin/participants");
+  revalidatePath("/");
+}

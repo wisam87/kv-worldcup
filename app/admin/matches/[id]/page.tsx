@@ -5,6 +5,7 @@ import ResultForm from "@/components/admin/ResultForm";
 import SetTeamsForm from "@/components/admin/SetTeamsForm";
 import PredictionForm from "@/components/admin/PredictionForm";
 import PredictionRow from "@/components/admin/PredictionRow";
+import CopyWinnersButton from "@/components/admin/CopyWinnersButton";
 import { createClient } from "@/lib/supabase/server";
 import { MATCH_SELECT, homeSide, awaySide } from "@/lib/teams";
 import { isResultUnlocked, formatKickoff, formatTime, unlockAt } from "@/lib/format";
@@ -72,6 +73,14 @@ export default async function MatchDetailPage({
   const available = (participants ?? []).filter(
     (p) => !predictedIds.has(p.id)
   );
+
+  // People who earned points (for the "Copy Winners List" button).
+  const winners = preds
+    .filter((p) => p.points_awarded > 0)
+    .map((p) => ({
+      name: p.participant?.name ?? "Unknown",
+      points: p.points_awarded,
+    }));
 
   const teamsKnown = match.home_team_id && match.away_team_id;
 
@@ -170,6 +179,7 @@ export default async function MatchDetailPage({
             ? "Points are awarded automatically."
             : "Points will be awarded once a result is saved."
         }
+        action={finished ? <CopyWinnersButton winners={winners} /> : undefined}
       >
         {(participants ?? []).length === 0 ? (
           <p className="text-sm text-white/50">
@@ -226,19 +236,24 @@ export default async function MatchDetailPage({
 function Section({
   title,
   hint,
+  action,
   children,
 }: {
   title: string;
   hint?: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className="rounded-2xl card-glass p-5">
-      <div className="mb-4">
-        <h2 className="font-display text-lg font-600 uppercase tracking-wide text-white">
-          {title}
-        </h2>
-        {hint && <p className="text-xs text-white/50">{hint}</p>}
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-600 uppercase tracking-wide text-white">
+            {title}
+          </h2>
+          {hint && <p className="text-xs text-white/50">{hint}</p>}
+        </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
       {children}
     </section>

@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useState } from "react";
 import ParticipantForm from "./ParticipantForm";
-import { deleteParticipant } from "@/app/admin/participants/actions";
+import { deleteParticipant, removePhoto } from "@/app/admin/participants/actions";
 import type { Participant } from "@/lib/types";
 
 export default function ParticipantRow({
@@ -17,10 +17,20 @@ export default function ParticipantRow({
   return (
     <li className="rounded-2xl card-glass p-3">
       {editing ? (
-        <ParticipantForm
-          participant={participant}
-          onDone={() => setEditing(false)}
-        />
+        <div className="space-y-3">
+          <ParticipantForm
+            participant={participant}
+            onDone={() => setEditing(false)}
+          />
+          {participant.photo_url && (
+            <form action={removePhoto} className="border-t border-white/10 pt-3">
+              <input type="hidden" name="id" value={participant.id} />
+              <button className="text-xs font-600 text-flame-300 underline-offset-2 transition hover:text-flame-200 hover:underline">
+                Remove picture
+              </button>
+            </form>
+          )}
+        </div>
       ) : (
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-pitch-700 ring-1 ring-white/15">

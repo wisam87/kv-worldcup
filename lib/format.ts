@@ -14,7 +14,13 @@ export function unlockAt(kickoffIso: string) {
   );
 }
 
+// Kickoffs are stored in UTC; the whole audience is in the Maldives, and these
+// pages are server-rendered, so we pin all display formatting to Maldives time
+// (UTC+5) rather than relying on the server's or browser's timezone.
+const TZ = "Indian/Maldives";
+
 const dateFmt = new Intl.DateTimeFormat("en-US", {
+  timeZone: TZ,
   weekday: "short",
   month: "short",
   day: "numeric",
@@ -27,6 +33,7 @@ export function formatKickoff(iso: string) {
 }
 
 const dayFmt = new Intl.DateTimeFormat("en-US", {
+  timeZone: TZ,
   weekday: "long",
   month: "long",
   day: "numeric",
@@ -37,6 +44,7 @@ export function formatDay(iso: string) {
 }
 
 const timeFmt = new Intl.DateTimeFormat("en-US", {
+  timeZone: TZ,
   hour: "numeric",
   minute: "2-digit",
 });
@@ -46,18 +54,25 @@ export function formatTime(iso: string) {
 }
 
 const shortDateFmt = new Intl.DateTimeFormat("en-GB", {
+  timeZone: TZ,
   day: "numeric",
   month: "short",
 });
 
-/** e.g. "12 Jun - 9:00 AM" */
+/** e.g. "12 Jun - 9:00 AM" (Maldives time) */
 export function formatShortKickoff(iso: string) {
   const d = new Date(iso);
   return `${shortDateFmt.format(d)} - ${timeFmt.format(d)}`;
 }
 
-/** YYYY-MM-DD bucket key for grouping fixtures by day (local time). */
+// YYYY-MM-DD bucket key for grouping fixtures by Maldives day.
+const keyFmt = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TZ,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 export function dayKey(iso: string) {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  return keyFmt.format(new Date(iso));
 }
