@@ -1,19 +1,100 @@
 import ParticipantForm from "@/components/admin/ParticipantForm";
 import ParticipantRow from "@/components/admin/ParticipantRow";
 import { createClient } from "@/lib/supabase/server";
-import type { Participant } from "@/lib/types";
+import { MATCH_SELECT, homeSide, awaySide } from "@/lib/teams";
+import {
+  STAGE_LABELS,
+  type Participant,
+  type MatchWithTeams,
+  type Prediction,
+  type LeaderboardRow,
+  type ParticipantMatchBreakdown,
+} from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function ParticipantsPage() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("participants")
-    .select("*")
-    .order("name", { ascending: true })
-    .returns<Participant[]>();
 
-  const participants = data ?? [];
+  const [
+    { data: participantsData },
+    { data: leaderboardData },
+    { data: matchesData },
+    { data: predictionsData },
+  ] = await Promise.all([
+    supabase
+      .from("participants")
+      .select("*")
+      .order("name", { ascending: true })
+      .returns<Participant[]>(),
+    supabase
+      .from("leaderboard")
+      .select("id, total_points")
+      .returns<{ id: string; total_points: number }[]>(),
+    // Only matches with a result entered.
+    supabase
+      .from("matches")
+      .select(MATCH_SELECT)
+      .eq("status", "finished")
+      .order("kickoff_time", { ascending: true })
+      .returns<MatchWithTeams[]>(),
+    supabase
+      .from("predictions")
+      .select(
+        "id, match_id, participant_id, predicted_home, predicted_away, points_awarded"
+      )
+      .returns<Prediction[]>(),
+  ]);
+
+  const pointsById = new Map(
+    (leaderboardData ?? []).map((r) => [r.id, r.total_points])
+  );
+
+  const finishedMatches = matchesData ?? [];
+
+  // prediction lookup keyed by `${participantId}:${matchId}`
+  const predByKey = new Map(
+    (predictionsData ?? []).map((p) => [
+      `${p.participant_id}:${p.match_id}`,
+      p,
+    ])
+  );
+
+  function breakdownFor(participantId: string): ParticipantMatchBreakdown[] {
+    return finishedMatches.map((m) => {
+      const home = homeSide(m);
+      const away = awaySide(m);
+      const pred = predByKey.get(`${participantId}:${m.id}`);
+      return {
+        matchId: m.id,
+        stageLabel: STAGE_LABELS[m.stage],
+        kickoff: m.kickoff_time,
+        home: { name: home.name, flag: home.flag },
+        away: { name: away.name, flag: away.flag },
+        homeScore: m.home_score,
+        awayScore: m.away_score,
+        predicted: pred
+          ? {
+              home: pred.predicted_home,
+              away: pred.predicted_away,
+              points: pred.points_awarded,
+            }
+          : null,
+      };
+    });
+  }
+
+  const participants = (participantsData ?? [])
+    .map((p) => ({
+      participant: p,
+      totalPoints: pointsById.get(p.id) ?? 0,
+      breakdown: breakdownFor(p.id),
+    }))
+    .sort(
+      (a, b) =>
+        b.totalPoints - a.totalPoints ||
+        a.participant.name.localeCompare(b.participant.name)
+    );
 
   return (
     <div className="space-y-6">
@@ -37,7 +118,12 @@ export default async function ParticipantsPage() {
       {participants.length > 0 ? (
         <ul className="space-y-2">
           {participants.map((p) => (
-            <ParticipantRow key={p.id} participant={p} />
+            <ParticipantRow
+              key={p.participant.id}
+              participant={p.participant}
+              totalPoints={p.totalPoints}
+              breakdown={p.breakdown}
+            />
           ))}
         </ul>
       ) : (

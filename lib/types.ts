@@ -72,6 +72,17 @@ export type PredictionWithParticipant = Prediction & {
   participant: Pick<Participant, "id" | "name" | "photo_url"> | null;
 };
 
+export type ParticipantMatchBreakdown = {
+  matchId: string;
+  stageLabel: string;
+  kickoff: string;
+  home: { name: string; flag: string | null };
+  away: { name: string; flag: string | null };
+  homeScore: number | null;
+  awayScore: number | null;
+  predicted: { home: number; away: number; points: number } | null;
+};
+
 export type LeaderboardRow = {
   id: string;
   name: string;
