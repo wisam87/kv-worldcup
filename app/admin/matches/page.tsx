@@ -73,7 +73,9 @@ function AdminMatchRow({ match }: { match: MatchWithTeams }) {
   const away = awaySide(match);
   const finished = match.status === "finished";
   const unlocked = isResultUnlocked(match.kickoff_time);
-  const copyLabel = `${formatCompactTime(match.kickoff_time)} ${home.name} vs ${away.name}`;
+  const homeText = home.flag ? `${home.name} ${home.flag}` : home.name;
+  const awayText = away.flag ? `${away.name} ${away.flag}` : away.name;
+  const copyLabel = `${formatCompactTime(match.kickoff_time)} ${homeText} vs ${awayText}`;
 
   return (
     <li className="flex items-center gap-2">
