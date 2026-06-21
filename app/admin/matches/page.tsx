@@ -2,7 +2,16 @@ import Link from "next/link";
 import Flag from "@/components/Flag";
 import { createClient } from "@/lib/supabase/server";
 import { MATCH_SELECT, homeSide, awaySide } from "@/lib/teams";
-import { isResultUnlocked, formatShortKickoff } from "@/lib/format";
+import {
+  isResultUnlocked,
+  formatShortKickoff,
+  formatCompactTime,
+} from "@/lib/format";
+import {
+  MatchCopyProvider,
+  MatchCheckbox,
+  CopySelectedBar,
+} from "@/components/admin/MatchCopy";
 import {
   STAGE_LABELS,
   STAGE_ORDER,
@@ -28,30 +37,34 @@ export default async function AdminMatchesPage() {
   })).filter((s) => s.matches.length > 0);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-700 uppercase tracking-tight text-white">
-          Matches
-        </h1>
-        <p className="mt-1 text-sm text-white/60">
-          {finishedCount}/{matches.length} results entered · tap a match to
-          record the score &amp; predictions.
-        </p>
-      </div>
+    <MatchCopyProvider>
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-display text-3xl font-700 uppercase tracking-tight text-white">
+            Matches
+          </h1>
+          <p className="mt-1 text-sm text-white/60">
+            {finishedCount}/{matches.length} results entered · tap a match to
+            record the score &amp; predictions.
+          </p>
+        </div>
 
-      {byStage.map(({ stage, matches }) => (
-        <section key={stage}>
-          <h2 className="mb-3 font-display text-sm font-600 uppercase tracking-[0.2em] text-gold-400">
-            {STAGE_LABELS[stage]}
-          </h2>
-          <ul className="space-y-2">
-            {matches.map((m) => (
-              <AdminMatchRow key={m.id} match={m} />
-            ))}
-          </ul>
-        </section>
-      ))}
-    </div>
+        <CopySelectedBar />
+
+        {byStage.map(({ stage, matches }) => (
+          <section key={stage}>
+            <h2 className="mb-3 font-display text-sm font-600 uppercase tracking-[0.2em] text-gold-400">
+              {STAGE_LABELS[stage]}
+            </h2>
+            <ul className="space-y-2">
+              {matches.map((m) => (
+                <AdminMatchRow key={m.id} match={m} />
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    </MatchCopyProvider>
   );
 }
 
@@ -60,12 +73,20 @@ function AdminMatchRow({ match }: { match: MatchWithTeams }) {
   const away = awaySide(match);
   const finished = match.status === "finished";
   const unlocked = isResultUnlocked(match.kickoff_time);
+  const copyLabel = `${formatCompactTime(match.kickoff_time)} ${home.name} vs ${away.name}`;
 
   return (
-    <li>
+    <li className="flex items-center gap-2">
+      {!finished && (
+        <MatchCheckbox
+          id={match.id}
+          sort={new Date(match.kickoff_time).getTime()}
+          label={copyLabel}
+        />
+      )}
       <Link
         href={`/admin/matches/${match.id}`}
-        className="block rounded-xl card-glass px-3 py-2.5 transition hover:-translate-y-0.5 hover:border-white/25"
+        className="block flex-1 rounded-xl card-glass px-3 py-2.5 transition hover:-translate-y-0.5 hover:border-white/25"
       >
         <div className="mb-1.5 flex items-center justify-between gap-2 text-[11px] font-600">
           <span className="text-white/45">

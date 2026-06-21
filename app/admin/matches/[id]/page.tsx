@@ -5,6 +5,7 @@ import ResultForm from "@/components/admin/ResultForm";
 import SetTeamsForm from "@/components/admin/SetTeamsForm";
 import PredictionForm from "@/components/admin/PredictionForm";
 import PredictionRow from "@/components/admin/PredictionRow";
+import PendingPredictors from "@/components/admin/PendingPredictors";
 import CopyWinnersButton from "@/components/admin/CopyWinnersButton";
 import { createClient } from "@/lib/supabase/server";
 import { MATCH_SELECT, homeSide, awaySide } from "@/lib/teams";
@@ -36,8 +37,12 @@ export default async function MatchDetailPage({
   const match = matchData as MatchWithTeams | null;
   if (!match) notFound();
 
-  const [{ data: teams }, { data: participants }, { data: predictions }] =
-    await Promise.all([
+  const [
+    { data: teams },
+    { data: participants },
+    { data: predictions },
+    { data: leaderboard },
+  ] = await Promise.all([
       supabase
         .from("teams")
         .select("*")
@@ -56,6 +61,10 @@ export default async function MatchDetailPage({
         )
         .eq("match_id", id)
         .returns<PredictionWithParticipant[]>(),
+      supabase
+        .from("leaderboard")
+        .select("id, total_points")
+        .returns<{ id: string; total_points: number }[]>(),
     ]);
 
   const home = homeSide(match);
@@ -70,8 +79,12 @@ export default async function MatchDetailPage({
     return (a.participant?.name ?? "").localeCompare(b.participant?.name ?? "");
   });
   const predictedIds = new Set(preds.map((p) => p.participant_id));
+  // Participants who have scored at least one point so far.
+  const scoringIds = new Set(
+    (leaderboard ?? []).filter((r) => r.total_points > 0).map((r) => r.id)
+  );
   const available = (participants ?? []).filter(
-    (p) => !predictedIds.has(p.id)
+    (p) => !predictedIds.has(p.id) && scoringIds.has(p.id)
   );
 
   // People who earned points (for the "Copy Winners List" button).
@@ -170,6 +183,9 @@ export default async function MatchDetailPage({
           unlockLabel={unlockLabel}
         />
       </Section>
+
+      {/* Scoring participants still missing a prediction for this match */}
+      <PendingPredictors participants={available} />
 
       {/* Predictions */}
       <Section

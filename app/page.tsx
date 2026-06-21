@@ -22,7 +22,9 @@ export default async function HomePage() {
     .select("*", { count: "exact", head: true })
     .eq("status", "finished");
 
-  const leaders = rows ?? [];
+  const allRows = rows ?? [];
+  // Only show people who have scored at least one point.
+  const leaders = allRows.filter((r) => r.total_points > 0);
   const topScore = leaders[0]?.total_points ?? 0;
 
   return (
@@ -47,7 +49,7 @@ export default async function HomePage() {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Stat label="Participants" value={leaders.length} />
+            <Stat label="Participants" value={allRows.length} />
             <Stat label="Matches played" value={matchesPlayed ?? 0} />
             <Stat label="Top score" value={topScore} accent />
           </div>

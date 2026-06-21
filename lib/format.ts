@@ -65,6 +65,22 @@ export function formatShortKickoff(iso: string) {
   return `${shortDateFmt.format(d)} - ${timeFmt.format(d)}`;
 }
 
+const compactTimeFmt = new Intl.DateTimeFormat("en-US", {
+  timeZone: TZ,
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+/** Compact kickoff time for copy lists, e.g. "1PM" or "1:30PM" (Maldives time). */
+export function formatCompactTime(iso: string) {
+  // en-US gives e.g. "1:00 PM" — strip ":00" and the space for a tight label.
+  return compactTimeFmt
+    .format(new Date(iso))
+    .replace(":00", "")
+    .replace(" ", "");
+}
+
 // YYYY-MM-DD bucket key for grouping fixtures by Maldives day.
 const keyFmt = new Intl.DateTimeFormat("en-CA", {
   timeZone: TZ,
