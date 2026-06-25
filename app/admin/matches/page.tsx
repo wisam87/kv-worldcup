@@ -22,13 +22,20 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminMatchesPage() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("matches")
-    .select(MATCH_SELECT)
-    .order("kickoff_time", { ascending: true })
-    .returns<MatchWithTeams[]>();
+  const [{ data }, { data: predictionRows }] = await Promise.all([
+    supabase
+      .from("matches")
+      .select(MATCH_SELECT)
+      .order("kickoff_time", { ascending: true })
+      .returns<MatchWithTeams[]>(),
+    supabase.from("predictions").select("match_id").returns<{ match_id: string }[]>(),
+  ]);
 
   const matches = data ?? [];
+  const submissionCounts = new Map<string, number>();
+  for (const { match_id } of predictionRows ?? []) {
+    submissionCounts.set(match_id, (submissionCounts.get(match_id) ?? 0) + 1);
+  }
   const finishedCount = matches.filter((m) => m.status === "finished").length;
 
   const byStage = STAGE_ORDER.map((stage) => ({
@@ -58,7 +65,11 @@ export default async function AdminMatchesPage() {
             </h2>
             <ul className="space-y-2">
               {matches.map((m) => (
-                <AdminMatchRow key={m.id} match={m} />
+                <AdminMatchRow
+                  key={m.id}
+                  match={m}
+                  submissions={submissionCounts.get(m.id) ?? 0}
+                />
               ))}
             </ul>
           </section>
@@ -68,7 +79,13 @@ export default async function AdminMatchesPage() {
   );
 }
 
-function AdminMatchRow({ match }: { match: MatchWithTeams }) {
+function AdminMatchRow({
+  match,
+  submissions,
+}: {
+  match: MatchWithTeams;
+  submissions: number;
+}) {
   const home = homeSide(match);
   const away = awaySide(match);
   const finished = match.status === "finished";
@@ -106,6 +123,10 @@ function AdminMatchRow({ match }: { match: MatchWithTeams }) {
           >
             {finished ? "FT" : unlocked ? "Ready" : "Locked"}
           </span>
+        </div>
+
+        <div className="mb-1.5 text-[11px] font-700 uppercase tracking-wider text-white">
+          {submissions} SUBMISSION{submissions === 1 ? "" : "S"}
         </div>
 
         <div className="flex items-center gap-3">
