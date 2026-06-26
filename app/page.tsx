@@ -14,6 +14,7 @@ export default async function HomePage() {
     .from("leaderboard")
     .select("*")
     .order("total_points", { ascending: false })
+    .order("exact_hits", { ascending: false })
     .order("name", { ascending: true })
     .returns<LeaderboardRow[]>();
 

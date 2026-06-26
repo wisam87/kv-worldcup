@@ -96,10 +96,14 @@ export default function ParticipantCard({
         </span>
       </div>
 
-      <div className="flex items-center gap-3 text-[11px] font-500 text-white/55">
-        <span title="Exact-score hits">🎯 {row.exact_hits}</span>
+      <div className="flex items-center gap-2.5 text-[11px] font-500 text-white/55">
+        <span title="Exact scores (3 pts)">🎯 {row.exact_hits}</span>
         <span className="h-3 w-px bg-white/15" />
-        <span title="Predictions made">📝 {row.predictions_made}</span>
+        <span title="Right outcomes (1 pt)">
+          ✅ {row.correct_hits - row.exact_hits}
+        </span>
+        <span className="h-3 w-px bg-white/15" />
+        <span title="Submissions">📝 {row.predictions_made}</span>
       </div>
     </Link>
   );
