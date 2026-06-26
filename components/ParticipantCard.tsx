@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import Link from "next/link";
 import CountUp from "./CountUp";
 import type { LeaderboardRow } from "@/lib/types";
 
@@ -46,7 +47,8 @@ export default function ParticipantCard({
   const top = RANK_STYLES[rank];
 
   return (
-    <article
+    <Link
+      href={`/participants/${row.id}`}
       className={`rise group relative flex flex-col items-center gap-3 rounded-2xl card-glass p-4 text-center transition duration-300 hover:-translate-y-1 hover:border-white/25 ${
         top ? top.glow : ""
       }`}
@@ -99,6 +101,6 @@ export default function ParticipantCard({
         <span className="h-3 w-px bg-white/15" />
         <span title="Predictions made">📝 {row.predictions_made}</span>
       </div>
-    </article>
+    </Link>
   );
 }

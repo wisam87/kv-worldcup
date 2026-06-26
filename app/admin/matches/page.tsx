@@ -20,20 +20,43 @@ import {
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Fetch every prediction's match_id. PostgREST caps a single response at 1000
+ * rows, so we page through to avoid undercounting submissions once the league
+ * grows past that (participants × matches easily exceeds 1000).
+ */
+async function fetchAllPredictionMatchIds(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<string[]> {
+  const pageSize = 1000;
+  const ids: string[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("predictions")
+      .select("match_id")
+      .range(from, from + pageSize - 1)
+      .returns<{ match_id: string }[]>();
+    if (error || !data || data.length === 0) break;
+    for (const { match_id } of data) ids.push(match_id);
+    if (data.length < pageSize) break;
+  }
+  return ids;
+}
+
 export default async function AdminMatchesPage() {
   const supabase = await createClient();
-  const [{ data }, { data: predictionRows }] = await Promise.all([
+  const [{ data }, predictionMatchIds] = await Promise.all([
     supabase
       .from("matches")
       .select(MATCH_SELECT)
       .order("kickoff_time", { ascending: true })
       .returns<MatchWithTeams[]>(),
-    supabase.from("predictions").select("match_id").returns<{ match_id: string }[]>(),
+    fetchAllPredictionMatchIds(supabase),
   ]);
 
   const matches = data ?? [];
   const submissionCounts = new Map<string, number>();
-  for (const { match_id } of predictionRows ?? []) {
+  for (const match_id of predictionMatchIds) {
     submissionCounts.set(match_id, (submissionCounts.get(match_id) ?? 0) + 1);
   }
   const finishedCount = matches.filter((m) => m.status === "finished").length;
