@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run db:seed:r32 && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:r32": "node scripts/generate-r32-seed.mjs",
+    "db:seed:r32": "node scripts/seed-r32-db.mjs"
   },
   "dependencies": {
     "@radix-ui/react-popover": "^1.1.16",
