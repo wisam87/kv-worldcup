@@ -54,26 +54,50 @@ if (r32.length !== 16) {
   process.exit(1);
 }
 
-// Only the columns we want to own. Omitting home_team_id/away_team_id/score/
-// status means: defaults on insert, untouched on update (see defaultToNull).
+const supabase = createClient(url, serviceKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
+// Resolve team names → ids from the live teams table (robust regardless of how
+// teams were seeded). R32 fixtures reference teams by name in fixtures.json.
+const { data: teams, error: teamsErr } = await supabase
+  .from("teams")
+  .select("id, name");
+if (teamsErr) {
+  console.error("[seed:r32] could not load teams:", teamsErr.message);
+  process.exit(1);
+}
+const teamId = new Map(teams.map((t) => [t.name, t.id]));
+
+const lookup = (name) => {
+  if (name == null) return null;
+  const id = teamId.get(name);
+  if (!id) {
+    console.error(`[seed:r32] no team row named "${name}" — seed teams first.`);
+    process.exit(1);
+  }
+  return id;
+};
+
+// Columns this seed owns. We set home/away team ids now that the R32 is decided.
+// home_score/away_score/status stay out of the payload, so (with
+// defaultToNull: false) they default on insert and are untouched on update.
 const rows = r32.map((m) => ({
   match_number: m.match_number,
   stage: m.stage,
   group_name: m.group ?? null,
+  home_team_id: lookup(m.home),
+  away_team_id: lookup(m.away),
   home_label: m.home_label ?? null,
   away_label: m.away_label ?? null,
   kickoff_time: m.kickoff_utc, // UTC; the app renders Maldives time (UTC+5)
   venue: m.venue ?? null,
 }));
 
-const supabase = createClient(url, serviceKey, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
-
 const { error } = await supabase
   .from("matches")
   // defaultToNull: false → missing columns use DB defaults on insert and are
-  // left untouched on update (preserves teams/scores/status set later).
+  // left untouched on update (preserves scores/status entered later).
   .upsert(rows, { onConflict: "match_number", defaultToNull: false });
 
 if (error) {
@@ -81,4 +105,4 @@ if (error) {
   process.exit(1);
 }
 
-console.log(`[seed:r32] upserted ${rows.length} Round of 32 matches.`);
+console.log(`[seed:r32] upserted ${rows.length} Round of 32 matches (with teams).`);
